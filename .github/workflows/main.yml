@@ -1,0 +1,37 @@
+name: Scraper Nouveaux Épisodes Anime-Sama
+
+on:
+  schedule:
+    # Toutes les 6 heures pour ne pas rater les nouveaux épisodes
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  scrape-episodes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install playwright aiohttp firebase-admin
+
+      - name: Install Playwright browsers
+        run: playwright install chromium --with-deps
+
+      - name: Write Firebase credentials
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > serviceAccountKey.json
+
+      - name: Run episodes scraper
+        run: python scraper_episodes.py
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -f serviceAccountKey.json
